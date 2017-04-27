@@ -1,0 +1,151 @@
+#!/usr/bin/python
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+from ansible.module_utils.basic import *  # noqa
+from tempfile import mkstemp
+
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
+DOCUMENTATION = '''
+---
+module: docker_stack
+author: "Dario Zanzico (@dariko)"
+short_description: docker stack module
+description: |
+    Manage docker stacks using the 'docker stack' command
+    on the target node
+    (see examples)
+version_added: "2.3"
+options:
+    name:
+        required: true
+        description:
+        -   Stack name
+    state:
+        required: true
+        description:
+        -   Service state.
+        choices:
+        -   present
+        -   absent
+    compose_yaml:
+        required: false
+        default: ""
+        description:
+        -   string containing the yaml definition of the stack
+        -   must be in compose format
+    compose_file:
+        required: false
+        default: ""
+        description:
+        -   path on the module executing node of a file containing
+            the compose file to be deployes
+'''
+
+RETURN = '''
+ansible_swarm_service:
+    out:
+    -   Stdout of the 'docker stack' command
+    err:
+    -   Stderr of the 'docker stack' command
+    rc:
+    -   Return code of the 'docker stack' command
+  '''
+
+EXAMPLES = '''
+-   name: deploy 'stack1' stack from file
+    docker_stack:
+        state: present
+        name: stack1
+        compose_file: /opt/stack.compose
+-   name: deploy 'stack2' from yaml
+    docker_stack:
+        state: present
+        name: stack2
+        compose_yaml: |
+            version: '3'
+            services:
+                web:
+                    image: nginx
+                    ports:
+                    -   "80:80"
+-   name: deprovision 'stack1'
+    docker_stack:
+        state: absent
+'''
+
+def main():
+    module = AnsibleModule(
+        argument_spec={
+            'name': dict(required=True),
+            'compose_yaml': dict(),
+            'compose_file': dict(),
+            'state': dict(default='present', choices=['present', 'absent'])
+        },
+        supports_check_mode=False
+    )
+
+    state = module.params['state']
+    compose_yaml = module.params['compose_yaml']
+    compose_file = module.params['compose_file']
+    name = module.params['name']
+
+    if state == 'present':
+        if compose_yaml and compose_file:
+            module.fail_json(msg="both compose_file and compose_yaml " +
+                                 "parameters given")
+        elif compose_yaml:
+            fd, compose_file = mkstemp()
+            stack_file = open(stack_file_path, 'w')
+            stack_file.write(yaml)
+            stack_file.close()
+            os.close(fd)
+        elif not compose_file:
+            module.fail_json(msg="compose_yaml or compose_file " +
+                                 "parameters required if state==up")
+
+        rc, out, err = module.run_command(["docker",
+                                           "stack",
+                                           "deploy",
+                                           "--compose-file",
+                                           compose_file,
+                                           name])
+        if compose_yaml:
+            os.remove(stack_file_path)
+        if not rc == 0:
+            module.fail_json(msg="'docker stack up' command failed",
+                             out=out,
+                             rc=rc, err=err)
+
+        module.exit_json(changed=True, msg=out, err=err)
+    else:
+        rc, out, err = module.run_command(["docker",
+                                           "stack",
+                                           "down",
+                                           name])
+
+        if not rc == 0:
+            module.fail_json(msg="'docker stack down' command failed",
+                             out=out,
+                             rc=rc,
+                             err=err)
+
+        module.exit_json(changed=True, msg=out, err=err)
+
+main()

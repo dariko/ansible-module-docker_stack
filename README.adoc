@@ -1,0 +1,22 @@
+docker_stack ansible module
+---------------------------
+
+This ansible module deploys/deprovisions docker stacks invoking
+the `docker stack` command on the target node.
+
+
+WARNING: This module always returns `changed=true`: the corresponding task will
+be marked as changed by ansible even if no changes occurred.
+
+module parameters
+=================
+
+[options="header"]
+|======================
+|parameter name | required | default | description
+|name           | yes      |         | stack name
+|state          | yes      |         | stack status (`present` or `absent`)
+|compose_yaml   | no       |         | string containing the yaml definition of the stack
+|compose_file   | no       |         | path on the module executing node of a file containing. 
+4+^| *`compose_yaml` OR `compose_file` parameters required*
+|======================
