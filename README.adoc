@@ -1,15 +1,11 @@
 docker_stack ansible module
----------------------------
+===========================
 
 This ansible module deploys/deprovisions docker stacks invoking
 the `docker stack` command on the target node.
 
-
-WARNING: This module always returns `changed=true`: the corresponding task will
-be marked as changed by ansible even if no changes occurred.
-
 module parameters
-=================
+-----------------
 
 [options="header"]
 |======================
@@ -20,3 +16,40 @@ module parameters
 |compose_file   | no       |         | path on the module executing node of a file containing. 
 4+^| *`compose_yaml` OR `compose_file` parameters required*
 |======================
+
+return value
+------------
+The module returns a variable `docker_stack_spec_diff` which contains
+the differences between the 'Spec' field of the stack services before
+and after applying the new stack definition. +
+For example, deleting removing the environment variables from a service
+named `test_service` in a stack named `test_stack` with this task:
+
+----
+-   name: test service
+    run_once: yes
+    docker_stack:
+        state: present
+        name: test_stack
+        compose_yaml:
+            version: '3'
+            services:
+                test_service:
+                    image: alpine:latest
+----
+
+will return:
+----
+changed: [test_host] => {
+    "changed": true,
+    "docker_stack_specs_diff": "{'test_stack_test_service': {u'TaskTemplate': {u'ContainerSpec': {delete: [u'Env']}}}}",
+    "invocation": {
+        "module_args": {
+            "compose_file": null,
+            "compose_yaml": "{'services': {'test_service': {'image': 'alpine:latest'}}, 'version': '3'}",
+            "name": "test_stack",
+            "state": "present"
+        }
+    }
+}
+----
