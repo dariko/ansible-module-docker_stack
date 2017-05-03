@@ -50,14 +50,14 @@ options:
         required: false
         default: ""
         description:
-        -   string containing the yaml definition of the stack
-        -   must be in compose format
+        -   String containing the yaml definition of the stack
+        -   Must be in compose format
     compose_file:
         required: false
         default: ""
         description:
         -   >
-            path on the module executing node of a file containing
+            Path on the module executing node of a file containing
             the compose file to be deployed
 requirements:
 -   "jsondiff"
