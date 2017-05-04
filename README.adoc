@@ -12,6 +12,7 @@ module parameters
 |parameter name | required | default | description
 |name           | yes      |         | stack name
 |state          | yes      |         | stack status (`present` or `absent`)
+|prune          | no       |         | If true will add the `--prune` option to the docker command.
 |compose_yaml   | no       |         | string containing the yaml definition of the stack
 |compose_file   | no       |         | path on the module executing node of a file containing. 
 4+^| *`compose_yaml` OR `compose_file` parameters required*
