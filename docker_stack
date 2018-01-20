@@ -163,6 +163,7 @@ def main():
             'compose_yaml': dict(),
             'compose_file': dict(),
             'prune': dict(default=False, type='bool'),
+            'with_registry_auth': dict(default=False, type='bool'),
             'state': dict(default='present', choices=['present', 'absent'])
         },
         supports_check_mode=False
